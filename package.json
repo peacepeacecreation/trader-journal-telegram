@@ -4,8 +4,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node ./src/main.js",
-    "dev": "nodemon ./src/main.js"
+    "node": "node ./src/main.js",
+    "dev": "nodemon ./src/main.js",
+    "start": "pm2 start ./src/main.js",
+    "stop": "pm2 stop ./src/main.js"
   },
   "dependencies": {
     "@notionhq/client": "^2.2.14",
