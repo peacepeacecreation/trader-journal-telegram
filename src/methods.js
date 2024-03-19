@@ -1,4 +1,5 @@
 import { create, remove, updateState, updateFix, updateRisk, updateRR } from './notion.js'
+import Auth from './auth.js'
 
 String.prototype.splice = function(idx, rem, str) {
     return this.slice(0, idx) + str + this.slice(idx + Math.abs(rem));
@@ -23,6 +24,7 @@ const getReplyToMessageId = (captionEntities) => {
 
 export async function deleteMessage(ctx) {
     const { message_id, caption_entities } = ctx.message.reply_to_message
+    const notion = await Auth.notion(ctx.message.chat.username);
     await ctx.deleteMessage(message_id)
 
     if (!caption_entities) return
@@ -30,35 +32,39 @@ export async function deleteMessage(ctx) {
     const replyToMessageId = getReplyToMessageId(caption_entities)
     let msg = ctx.reply(replyToMessageId)
     if (replyToMessageId)
-        remove(replyToMessageId)
+        remove(notion, replyToMessageId)
 }
 
-export async function updateStateMessage(captionEntities, state) {
-    const replyToMessageId = getReplyToMessageId(captionEntities)
-
+export async function updateStateMessage(msg, state) {
+    const replyToMessageId = getReplyToMessageId(msg.caption_entities)
+    const notion = await Auth.notion(msg.chat.username);
+    console.log(msg, notion)
     //ctx.reply('reply ' + replyToMessageId)
 
     if (replyToMessageId)
-        return updateState(replyToMessageId, state)
+        return updateState(notion, replyToMessageId, state)
 }
 
-export async function updateFixMessage(captionEntities, rr, proc) {
-    const replyToMessageId = getReplyToMessageId(captionEntities)
+export async function updateFixMessage(msg, rr, proc) {
+    const replyToMessageId = getReplyToMessageId(msg.caption_entities)
+    const notion = await Auth.notion(msg.chat.username);
 
     if (replyToMessageId)
-        return await updateFix(replyToMessageId, rr, proc)
+        return await updateFix(notion, replyToMessageId, rr, proc)
 }
 
-export async function updateRiskMessage(captionEntities, value) {
-    const replyToMessageId = getReplyToMessageId(captionEntities)
+export async function updateRiskMessage(msg, value) {
+    const replyToMessageId = getReplyToMessageId(msg.caption_entities)
+    const notion = await Auth.notion(msg.chat.username);
 
     if (replyToMessageId)
-        return await updateRisk(replyToMessageId, value)
+        return await updateRisk(notion, replyToMessageId, value)
 }
 
-export async function updateRRMessage(captionEntities, value) {
-    const replyToMessageId = getReplyToMessageId(captionEntities)
+export async function updateRRMessage(msg, value) {
+    const replyToMessageId = getReplyToMessageId(msg.caption_entities)
+    const notion = await Auth.notion(msg.chat.username);
 
     if (replyToMessageId)
-        return await updateRR(replyToMessageId, value)
+        return await updateRR(notion, replyToMessageId, value)
 }

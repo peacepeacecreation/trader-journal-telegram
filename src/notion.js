@@ -1,7 +1,7 @@
 import { Client } from '@notionhq/client'
 import config from 'config'
 
-const notion = new Client({
+const nGeneral = new Client({
     auth: config.get('NOTION_KEY'),
 })
 
@@ -19,16 +19,16 @@ function getDataResponse(data) {
 
         fix: data.properties['Fix'].number,
         fix_proc: data.properties['Fix %'].number,
-        profit: data.properties['Profit'].formula.number
+        profit: data.properties['Profit'] && data.properties['Profit'].formula.number
     }
 }
 
-export async function create({ rr, href, risk, pair, position}) {
-    const databases = await notion.databases.query({ database_id: config.get('NOTION_DB_ID') })
+export async function create(notion, databaseId, { rr, href, risk, pair, position}) {
+    const databases = await notion.databases.query({ database_id: databaseId })
     const count = databases.results.length + 1
 
     const response = await notion.pages.create({
-        parent: { database_id: config.get('NOTION_DB_ID') },
+        parent: { database_id: databaseId },
         properties: {
             Name: {
                 title: [
@@ -117,18 +117,16 @@ export async function create({ rr, href, risk, pair, position}) {
         ]
     })
 
-    console.log('page ', response)
-
     return getDataResponse(response)
 }
 
-export async function remove(messageId) {
+export async function remove(notion, messageId) {
     const response = await notion.pages.update({page_id: messageId, archived: true});
 
     return { ...response }
 }
 
-export async function updateState(messageId, state) {
+export async function updateState(notion, messageId, state) {
     const response = await notion.pages.update({
         page_id: messageId,
         properties: {
@@ -143,7 +141,7 @@ export async function updateState(messageId, state) {
     return getDataResponse(response)
 }
 
-export async function updateFix(messageId, rr, proc) {
+export async function updateFix(notion, messageId, rr, proc) {
     try {
         const response = await notion.pages.update({
             page_id: messageId,
@@ -165,7 +163,7 @@ export async function updateFix(messageId, rr, proc) {
     }
 }
 
-export async function updateRisk(messageId, value) {
+export async function updateRisk(notion, messageId, value) {
     const response = await notion.pages.update({
         page_id: messageId,
         properties: {
@@ -178,7 +176,7 @@ export async function updateRisk(messageId, value) {
     return getDataResponse(response)
 }
 
-export async function updateRR(messageId, value) {
+export async function updateRR(notion, messageId, value) {
     const response = await notion.pages.update({
         page_id: messageId,
         properties: {

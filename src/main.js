@@ -2,12 +2,15 @@ import { Telegraf } from 'telegraf'
 import { message } from 'telegraf/filters'
 import config from 'config'
 
-import { create, remove, updateState } from './notion.js'
+import { remove, updateState } from './notion.js'
 import { deleteMessage, updateStateMessage, updateFixMessage, updateRiskMessage, updateRRMessage } from './methods.js'
 import messageStorage from './messageStorage.js'
 import { template } from './message/index.js'
 import buttons from './message/options.js'
 import KEYS from './message/keys.js'
+import Auth from './auth.js'
+import About from './about.js'
+
 
 const bot = new Telegraf(config.get('TELEGRAM_TOKEN'), {
     handlerTimeout: Infinity,
@@ -15,13 +18,28 @@ const bot = new Telegraf(config.get('TELEGRAM_TOKEN'), {
 
 bot.telegram.setMyCommands([
     {
+        command: 'start',
+        description: 'запустити бота'
+    },
+    {
         command: 'risk',
         description: 'set risk',
+    },
+    {
+        command: 'logout',
+        description: 'Logout'
     },
 ]);
 
 let status = null
 let fix = 0
+let sign = false
+let auth = {
+    DB_ID: null,
+    KEY: null,
+    author: null,
+    verified: false,
+}
 
 let risk = {
     state: false,
@@ -34,8 +52,57 @@ bot.command('risk', async ctx => {
     messageStorage.reply(ctx, 'Введіть ризик:')
 })
 
+bot.command('start', async ctx => {
+    const { username } = ctx.from
+    const signed = await Auth.signed(username)
+
+    if (signed) {
+        messageStorage.set(ctx.message.message_id)
+        messageStorage.reply(ctx, `Вітаю ${username}`)
+        messageStorage.finish(ctx)
+    } else {
+        messageStorage.set(ctx.message.message_id)
+        messageStorage.reply(ctx, `Привіт ${username}. Для продовження потрібно вставити secret key з notion:`)
+    }
+})
+
+bot.command('logout', async ctx => {
+    messageStorage.set(ctx.message.message_id)
+    messageStorage.finish(ctx)
+    auth = {
+        DB_ID: null,
+        KEY: null,
+        verified: false,
+    }
+})
+
 bot.on(message('text'), async (ctx) => {
-    const { text } = ctx.message
+    const { text, from: { username }} = ctx.message
+    const signed = await Auth.signed(username)
+
+    if (!signed) {
+        messageStorage.set(ctx.message.message_id)
+        const result = await Auth.createSecretKey(username, text)
+        if (result.message)
+            messageStorage.reply(ctx, result.message)
+
+        return
+    }
+
+    if (!Auth.checkDBID(signed)) {
+        messageStorage.set(ctx.message.message_id)
+
+        const result = await Auth.createDBID(username, text)
+        if (result.message)
+            messageStorage.reply(ctx, result.message)
+
+        if (result.valid) {
+            messageStorage.finish(ctx)
+            ctx.reply(About, { parse_mode: 'Markdown' })
+        }
+
+        return
+    }
 
     if (risk.state) {
         if (!Number.isNaN(Number(text)))
@@ -70,7 +137,7 @@ bot.on(message('text'), async (ctx) => {
             messageStorage.set(ctx.message.message_id)
 
             const response = await updateFixMessage(
-                messageStorage.ctx.update.callback_query.message.caption_entities,
+                messageStorage.ctx.update.callback_query.message,
                 Number(text),
                 fix
             )
@@ -94,7 +161,7 @@ bot.on(message('text'), async (ctx) => {
             messageStorage.set(ctx.message.message_id)
 
             let response = await updateRiskMessage(
-                messageStorage.ctx.update.callback_query.message.caption_entities,
+                messageStorage.ctx.update.callback_query.message,
                 Number(text) * 0.01
             )
             messageStorage.ctx.editMessageCaption(template(response), { parse_mode: 'Markdown', ...buttons.get(['edit']) })
@@ -115,7 +182,7 @@ bot.on(message('text'), async (ctx) => {
             messageStorage.set(ctx.message.message_id)
 
             let response = await updateRRMessage(
-                messageStorage.ctx.update.callback_query.message.caption_entities,
+                messageStorage.ctx.update.callback_query.message,
                 Number(text)
             )
             messageStorage.ctx.editMessageCaption(template(response), { parse_mode: 'Markdown', ...buttons.get(['edit']) })
@@ -200,7 +267,7 @@ bot.on('callback_query', async (ctx) => {
         if (data == 'edit') {
             ctx.editMessageReplyMarkup(buttons.getReply(['fix', 'edit_data'], ['exit']))
         } else {
-            let response = await updateStateMessage(message.caption_entities, data)
+            let response = await updateStateMessage(message, data)
             ctx.editMessageCaption(template(response), { parse_mode: 'Markdown', ...buttons.get(['edit']) })
         }
     } catch (e) {
@@ -212,11 +279,9 @@ bot.on(message('photo'), async (ctx) => {
     try {
         const text = ctx.message.caption
         let [position, rr] = text.split(' ')
-        position = KEYS[position]
-
 
         const { href } = await bot.telegram.getFileLink(ctx.message.photo[3].file_id)
-        const response = await create({ rr, href, risk: risk.value, pair: 'EUR/USD', position})
+        const response = await Auth.create(ctx.message.from.username, { rr, href, risk: risk.value, pair: 'EUR/USD', position: KEYS[position] })
 
         let msg = await ctx.replyWithPhoto(
             { url: href },
