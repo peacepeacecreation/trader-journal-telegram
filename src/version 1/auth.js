@@ -2,13 +2,8 @@ import { Client } from '@notionhq/client'
 import config from 'config'
 import { create } from './notion.js'
 
-const nGeneral = new Client({
-    auth: config.get('NOTION_KEY'),
-})
-
-function getPlainText(data) {
-    if (data.length > 0) return data[0].plain_text
-}
+const nGeneral = new Client({ auth: config.get('NOTION_KEY') })
+const getPlainText = (data) => data.length > 0 ? data[0].plain_text : null
 
 function getSecretKey(response) {
     if (!response) return null
@@ -23,9 +18,12 @@ function getDBID(response) {
 }
 
 export default {
+    myNotion: null,
+    database_id: null,
     async notion(username, auth) {
         if (!auth) auth = await getSecretKey(await this.getDB(username))
         const notion = new Client({ auth })
+        this.myNotion = notion
 
         return notion
     },

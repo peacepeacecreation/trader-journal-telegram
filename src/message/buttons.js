@@ -10,15 +10,15 @@ export default {
 
     target: {
         text: '✅ Target',
-        callback_data: 'Target'
+        callback_data: 'target'
     },
     be: {
         text: "BE",
-        callback_data: 'BE',
+        callback_data: 'be',
     },
     stop: {
         text: '❌ Stop',
-        callback_data: 'Loss'
+        callback_data: 'loss'
     },
 
     fix: {

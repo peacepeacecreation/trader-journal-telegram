@@ -8,5 +8,4 @@ export default {
     'fix': 'Fix', //number
     'fix_proc': 'Fix %', //number
     'profit': 'Profit', //formula
-
 }

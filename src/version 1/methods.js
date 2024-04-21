@@ -38,7 +38,6 @@ export async function deleteMessage(ctx) {
 export async function updateStateMessage(msg, state) {
     const replyToMessageId = getReplyToMessageId(msg.caption_entities)
     const notion = await Auth.notion(msg.chat.username);
-    console.log(msg, notion)
     //ctx.reply('reply ' + replyToMessageId)
 
     if (replyToMessageId)

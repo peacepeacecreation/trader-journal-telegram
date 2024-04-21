@@ -155,7 +155,7 @@ export async function updateFix(notion, messageId, rr, proc) {
             }
         });
 
-        console.log('response', response.properties['Profit'])
+        //console.log('response', response.properties['Profit'])
 
         return getDataResponse(response)
     } catch (e) {

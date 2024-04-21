@@ -19,4 +19,9 @@ export default {
     'fix': 'Fix',
     'fix_proc': 'Fix %',
     'profit': 'Profit',
+    'stateOptions': {
+        'target': 'Target',
+        'loss': 'Loss',
+        'be': 'BE',
+    },
 }
