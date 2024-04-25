@@ -7,7 +7,7 @@ async function cancelChanged(ctx) {
         ctx.update.callback_query.message.chat.id,
         ctx.scene.state.messageId,
         null,
-        buttons.getReply(['edit'])
+        buttons.getReply(['edit', 'fix', 'remove'])
     )
 
     await strMessage.clear(ctx, false)
@@ -15,21 +15,31 @@ async function cancelChanged(ctx) {
 }
 
 export default async function (ctx, callback) {
-    const { callback_query } = ctx.update
+    const { message } = ctx.update?.callback_query || ctx.update
+    const commandKey = ctx.update?.callback_query?.data || ctx.command
 
-    if (callback_query.data == 'exit') {
+    if (commandKey == 'exit') {
         await cancelChanged(ctx)
 
         return
     }
 
-    if (ctx.scene.state.messageId && ctx.scene.scenes.has(callback_query.data)) {
+    if (commandKey == 'cancel') {
+        await strMessage.clear(ctx, false)
+        await ctx.scene.leave()
+
+        return
+    }
+
+
+
+    if (ctx.scene.state.messageId && ctx.scene.scenes.has(commandKey)) {
         await cancelChanged(ctx)
         await callbackQuery(ctx)
 
         return
     }
 
-    ctx.scene.state.messageId = callback_query.message.message_id
+    ctx.scene.state.messageId = message.message_id
     await callback()
 }

@@ -7,7 +7,7 @@ export async function createMessage (ctx, href, response, btns = ['edit']) {
         {
             caption: template(response),
             parse_mode: 'Markdown',
-            reply_markup: buttons.getReply(btns)
+            reply_markup: Array.isArray(btns) ? buttons.getReply(btns) : btns
         },
     )
 
@@ -19,7 +19,7 @@ export async function editMessage (ctx, response, btns = ['edit']) {
         template(response),
         {
             parse_mode: 'Markdown',
-            reply_markup: buttons.getReply(btns)
+            reply_markup: Array.isArray(btns) ? buttons.getReply(btns) : btns
         }
     )
 }

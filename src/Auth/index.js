@@ -48,6 +48,7 @@ export default {
         return {
             traderJournalId: getData(author, 'DB_ID', 'title'),
             secretKey: getData(author, 'SECRET_KEY', 'rich_text'),
+            pairs: getData(author, 'PAIRS', 'rich_text').split(' '),
         }
     },
     async createSecretKey(ctx, value) {

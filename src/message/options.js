@@ -1,16 +1,33 @@
 import buttons from './buttons.js'
 
 export default {
-    get(names1 = [], names2 = []) {
+    pairs(ctx) {
+        return ctx.session.pairs
+            .reduce((res, btnName, index) => {
+                if (index % 3 == 0) {
+                    res.push([])
+                }
+
+                res[res.length - 1].push({
+                    text: btnName,
+                    callback_data: btnName,
+                })
+
+                return res
+            }, [])
+    },
+    get() {
         return {
-            reply_markup: this.getReply(names1)
+            reply_markup: this.getReply(arguments)
         }
     },
-    getReply(names1 = []) {
+    getReply() {
+        const args = [...arguments];
         return JSON.stringify({
-            inline_keyboard: [
-                names1.map((name) => buttons[name]),
-            ]
+            inline_keyboard: args.map((item) => this.getButtons(item))
         })
+    },
+    getButtons(item) {
+        return item.map((name) => buttons[name])
     },
 }

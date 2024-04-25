@@ -9,6 +9,8 @@ import ConnectDBGenerator from './ConnectDatabase.js'
 import FixGenerator from './Scenes/Fix.js'
 import RiskGenerator from './Scenes/Risk.js'
 import RRGenerator from './Scenes/RR.js'
+import PairGenerator from './Scenes/Pair.js'
+import PositionGenerator from './Scenes/Position.js'
 
 import Auth from './Auth/index.js'
 
@@ -20,31 +22,69 @@ const connectDB = new ConnectDBGenerator()
 const fixScene = new FixGenerator()
 const riskScene = new RiskGenerator()
 const rrScene = new RRGenerator()
+const pairScene = new PairGenerator()
+const positionScene = new PositionGenerator()
 
 const stage = new Stage([
     connectDB.GenSecretKey(),
     connectDB.GenTraderJournal(),
     fixScene.init(),
     riskScene.init(),
-    rrScene.init()
+    rrScene.init(),
+    pairScene.init(),
+    pairScene.addNewPair(),
+    pairScene.editExistingPair(),
+    pairScene.removePair(),
+    positionScene.create(),
+    positionScene.remove(),
 ])
 
 bot.use(session())
 bot.use(stage.middleware())
 
 bot.use(async (ctx, next) => {
-    const state = await Auth.hasSigned(ctx)
-    if (state.traderJournalId) {
-        ctx.state = state
+    if (ctx.session.traderJournalId) {
         await next()
+    } else {
+        const state = await Auth.hasSigned(ctx)
+        if (state.traderJournalId) {
+            ctx.session = state
+            await next()
+        }
     }
 })
 
+
+
+bot.telegram.setMyCommands([
+    {
+        command: 'start',
+        description: 'запустити бота'
+    },
+    {
+        command: 'add_new_pair',
+        description: 'додати нову пару',
+    },
+    {
+        command: 'edit_existing_pair',
+        description: 'додати пару',
+    },
+    {
+        command: 'remove_pair',
+        description: 'видалити пару',
+    },
+    // {
+    //     command: 'setting_notion',
+    //     description: 'налаштування таблиці'
+    // },
+    // {
+    //     command: 'tutorial',
+    //     description: 'гарячі клавіші'
+    // },
+])
+
 App.init(bot)
 
-// bot.command('scenes', async (ctx) => {
-//     ctx.scene.enter('fix')
-// })
 
 
 // bot.on(message('text'), async (ctx) => {

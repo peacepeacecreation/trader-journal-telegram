@@ -3,6 +3,19 @@ import position from './position.js'
 import callbackQuery from './callbackQuery.js'
 
 function init(bot) {
+
+    bot.command('edit_existing_pair', async (ctx) => {
+        ctx.scene.enter('editExistingPair', ctx.state)
+    })
+
+    bot.command('add_new_pair', async (ctx) => {
+        ctx.scene.enter('addNewPair', ctx.state)
+    })
+
+    bot.command('remove_pair', async (ctx) => {
+        ctx.scene.enter('removePair', ctx.state)
+    })
+
     bot.on('callback_query', async (ctx) => {
         //ctx.answerCallbackQuery()
 

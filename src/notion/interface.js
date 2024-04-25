@@ -6,10 +6,10 @@ export function getDataResponse(data) {
         url: data.url,
         title: data.properties.Name.title[0].plain_text,
         state: data.properties['State'].status.name,
-        position: data.properties['Position'].select.name,
+        position: data.properties['Position'].select?.name,
         risk: data.properties['Risk %'].number,
         rr: data.properties['Target'].number,
-        pair: data.properties['Pair'].select.name,
+        pair: data.properties['Pair'].select?.name,
 
         fix: data.properties['Fix'].number,
         fix_proc: data.properties['Fix %'].number,
